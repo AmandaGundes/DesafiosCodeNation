@@ -1,57 +1,52 @@
-from datetime import datetime, timedelta
+from abc import ABC, abstractmethod
+
+class Department:
+    def __init__(self, name, code):
+        self.name = name
+        self.code = code
 
 
-records = [
-    {'source': '48-996355555', 'destination': '48-666666666',
-        'end': 1564610974, 'start': 1564610674},
-    {'source': '41-885633788', 'destination': '41-886383097',
-        'end': 1564506121, 'start': 1564504821},
-    {'source': '48-996383697', 'destination': '41-886383097',
-        'end': 1564630198, 'start': 1564629838},
-    {'source': '48-999999999', 'destination': '41-885633788',
-        'end': 1564697158, 'start': 1564696258},
-    {'source': '41-833333333', 'destination': '41-885633788',
-        'end': 1564707276, 'start': 1564704317},
-    {'source': '41-886383097', 'destination': '48-996384099',
-        'end': 1564505621, 'start': 1564504821},
-    {'source': '48-999999999', 'destination': '48-996383697',
-        'end': 1564505721, 'start': 1564504821},
-    {'source': '41-885633788', 'destination': '48-996384099',
-        'end': 1564505721, 'start': 1564504821},
-    {'source': '48-996355555', 'destination': '48-996383697',
-        'end': 1564505821, 'start': 1564504821},
-    {'source': '48-999999999', 'destination': '41-886383097',
-        'end': 1564610750, 'start': 1564610150},
-    {'source': '48-996383697', 'destination': '41-885633788',
-        'end': 1564505021, 'start': 1564504821},
-    {'source': '48-996383697', 'destination': '41-885633788',
-        'end': 1564627800, 'start': 1564626000}
-]
+class Employee(ABC):
+    def __init__(self, code, name, salary, department):
+        self.code = code
+        self.name = name
+        self.salary = salary
+        self._department = department
+
+    @abstractmethod
+    def calc_bonus(self):
+        pass
+
+    @staticmethod
+    def get_hours():
+        return 8
+
+    def get_department(self):
+        return self._department.name
+
+    def set_department(self, name, code):
+        self._department = Department(name, code)
 
 
-def classify_by_phone_number(records):
-    bills = {}
-    result = []
-    for record in records:
-        source = record['source']
-        end_time = datetime.fromtimestamp(record['end'])
-        start_time = datetime.fromtimestamp(record['start'])
-        call_duration = int(((end_time - start_time).total_seconds())//60)
-        TAX = 0.36
-        for i in range(call_duration):
-            minute = timedelta(minutes=i)
-            if 6 <= (start_time + minute).hour < 22:
-                TAX += 0.09
-        if source in bills:
-            bills[source].append(TAX)
-        else:
-            bills[source] = [TAX]
-    for account in bills:
-        total_costs = 0
-        for cost in bills[account]:
-            total_costs += cost
-        total_costs = round(total_costs, 2)
-        result.append({'source': account, 'total': total_costs})
-    result.sort(reverse=True, key=lambda k: k['total'])
-    return(result)
-    print(classify_by_phone_number(records))
+class Manager(Employee):
+    def __init__(self, code, name, salary):
+        super().__init__(code, name, salary, Department('managers', 1)) 
+
+    def calc_bonus(self):
+        return self.salary * 0.15
+
+
+class Seller(Employee):
+    def __init__(self, code, name, salary):
+        super().__init__(code, name, salary, Department('sellers', 2))
+        self._sales = 0
+
+    def get_sales(self):
+        return self._sales
+
+    def put_sales(self, sales):
+        self._sales += sales
+        return self._sales  
+
+    def calc_bonus(self):
+        return self._sales * 0.15
